@@ -1,49 +1,55 @@
-#!/bin/bash
-
+#!/bin/dash
 . ${HOME}/col/ansi_colors.sh
 
-printf "Date          : \
-$bldcyn\
-📅$(date +"%d.%m.%Y")\
-$txtrst\n"
 
-printf "Time          : \
-$bldwht\
-🕑$(date +"%H.%M")\
-$txtrst\n"
+date_() { date +"%Y.%m.%d"; }
+time_() { date +"%l.%M %p"; }
+bat_percentage() { cat /sys/class/power_supply/BAT1/capacity; }
+disks() { df -h | grep ^/dev | grep -v boot; }
+volume() { (amixer get Master | grep -o -e '\w*%' | tr -d %) 2>/dev/null; }
+brightness()
+{
+	current_brgh=$(cat /sys/class/backlight/intel_backlight/brightness)
+	max_brgh=$(cat /sys/class/backlight/intel_backlight/max_brightness)
+	echo "scale=2; $current_brgh / ($max_brgh / 100)" | bc -l
+}
+bat_status()
+{
+	local stat=$(cat /sys/class/power_supply/BAT1/status)
+	if [ "$stat" = "Full" ]; then
+		printf Full;
+	elif [ "$stat" = "Charging" ]; then
+		printf Charging;
+	elif [ "$stat" = "Discharging" ]; then
+		printf Discharging;
+	fi
+}
 
-printf "Battery       : \
-$bldgrn\
-🔋$(cat /sys/class/power_supply/BAT1/capacity)%%\
-$txtrst\n"
+echo "$bldcyn\
+📅 $(date_)\
+$txtrst"
+echo "$bldwht\
+🕑 $(time_)\
+$txtrst"
 
+printf "\n"
 
-printf "Volume        : \
-$bldblu\
-🔉$(amixer get Master | grep -o -e '\w*%')%%" 2>/dev/null; printf "${txtrst}\n"
+echo "$bldblu\
+🔉 $(volume)%\
+${txtrst}"
+echo "$bldylw\
+☼  $(brightness)%\
+$txtrst" | sed 's/\(.*\)\..*\(%\)/\1\2/'
+echo "$bldgrn\
+🔋 $(bat_percentage)% $(bat_status)\
+$txtrst"
 
-printf "Brightness    : \
-$bldylw\
-☼ $(bc -l <<< "scale=2; $(cat /sys/class/backlight/intel_backlight/brightness) / ($(cat /sys/class/backlight/intel_backlight/max_brightness) / 100)")%%\
-$txtrst\n\n" | sed 's/\(.*\)\..*\(%\)/\1\2/'
+printf "\n"
 
+#printf "Wifi:"
+#printf "Vpn:"
+#printf "Ethernet:"
 
-printf "Wifi          : \
-$txtrst\n"
-
-printf "Vpn           : \
-$txtrst\n"
-
-printf "Ethernet      : \
-$txtrst\n\n"
-
-
-printf "Disk /        : \
-$bldblk\
-🖫 $(df -h 2>/dev/null | grep sda4 | tr "  " " " | awk '{printf $4}')\
-$txtrst\n"
-
-printf "Disk /media/d : \
-$bldblk\
-🖫 $(df -h 2>/dev/null | grep sdb1 | tr "  " " " | awk '{printf $4}')\
-$txtrst\n\n"
+disks | while read disk; do
+	echo $disk | awk '{printf "'$bldblk'🖫  " $4" '$txtrst'" $6 "\n"}'
+done
