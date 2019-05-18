@@ -1,9 +1,9 @@
-#!/bin/dash
+#!/bin/sh
 . ${HOME}/col/ansi_colors.sh
 
 
 date_() { date +"%Y.%m.%d"; }
-time_() { date +"%l.%M %p"; }
+time_() { date +"%I.%M %p"; }
 bat_percentage() { cat /sys/class/power_supply/BAT1/capacity; }
 disks() { df -h | grep ^/dev | grep -v boot; }
 volume() { (amixer get Master | grep -o -e '\w*%' | tr -d %) 2>/dev/null; }
@@ -25,31 +25,32 @@ bat_status()
 	fi
 }
 
-echo "$bldcyn\
+printf "$bldcyn\
 📅 $(date_)\
-$txtrst"
-echo "$bldwht\
+${txtrst}\n"
+printf "$bldwht\
 🕑 $(time_)\
-$txtrst"
+${txtrst}\n"
 
 printf "\n"
 
-echo "$bldblu\
-🔉 $(volume)%\
-${txtrst}"
-echo "$bldylw\
-☼  $(brightness)%\
-$txtrst" | sed 's/\(.*\)\..*\(%\)/\1\2/'
-echo "$bldgrn\
-🔋 $(bat_percentage)% $(bat_status)\
-$txtrst"
+printf "$bldblu\
+🔉 $(volume)%%\
+${txtrst}\n"
+printf "$bldylw\
+☼  $(brightness)%%\
+$txtrst\n" | sed 's/\(.*\)\..*\(%\)/\1\2/'
+printf "$bldgrn\
+🔋 $(bat_percentage)%% $(bat_status)\
+${txtrst}\n"
 
 printf "\n"
 
-#printf "Wifi:"
-#printf "Vpn:"
-#printf "Ethernet:"
+#TODO
+	#printf "Wifi:"
+	#printf "Vpn:"
+	#printf "Ethernet:"
 
 disks | while read disk; do
-	echo $disk | awk '{printf "'$bldblk'🖫  " $4" '$txtrst'" $6 "\n"}'
+	printf "%s\n" "$disk" | awk '{printf "'$bldblk'🖫  " $4" '$txtrst'" $6 "\n"}'
 done
